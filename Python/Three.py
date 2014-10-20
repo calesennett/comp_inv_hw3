@@ -81,16 +81,22 @@ def trade(cash, order_book, symbols, data):
     cash_dict = dict(zip(symbols, [0] * len(symbols)))
     cash_dict['CASH'] = cash
     timestamps = data['close'].index
-    dates = []
     port_values = []
+    order_index = 0
+    cur_order = order_book[order_index]
+    cur_date = dt.datetime(int(cur_order["Year"]), int(cur_order["Month"]), int(cur_order["Day"])) + dt.timedelta(hours=16)
     for timestamp in timestamps:
-        for order in order_book:
-            date = dt.datetime(int(order["Year"]), int(order["Month"]), int(order["Day"])) + dt.timedelta(hours=16)
-            if (date == timestamp):
-                cash_dict = execute(order["Sym"], data, timestamp, order, cash_dict, port)
-            cash_dict[order["Sym"]] = int(port[order["Sym"]]) * data['close'][order["Sym"]][timestamp]
+        while (cur_date == timestamp):
+            port, cash_dict = execute(data, timestamp, cur_order, cash_dict, port)
+            if (order_index >= len(order_book) - 1):
+                break
+            order_index += 1
+            cur_order = order_book[order_index]
+            cur_date = dt.datetime(int(cur_order["Year"]), int(cur_order["Month"]), int(cur_order["Day"])) + dt.timedelta(hours=16)
+        for sym in cash_dict:
+            if (sym != "CASH"):
+                cash_dict[sym] = int(port[sym]) * data['close'][sym][timestamp]
         cash = sum(cash_dict.values())
-        dates.append(",".join(str(timestamp)[:10].split('-')))
         port_values.append(cash)
     return timestamps, port_values
 
@@ -98,17 +104,17 @@ def get_cash(sym, data, timestamp, port):
     cash_value = port[sym] * data['close'][sym][timestamp]
     return cash_value
 
-def execute(sym, data, timestamp, order, cash_dict, port):
-    if order["Sym"].upper() == sym:
-        if order["Type"] == "Buy":
-            cash_dict['CASH'] -= int(order["Shares"]) * data['close'][sym][timestamp]
-            port[sym] += int(order["Shares"])
-            cash_dict[sym] = int(order["Shares"]) * data['close'][sym][timestamp]
-        if order["Type"] == "Sell":
-            cash_dict['CASH'] += int(order["Shares"]) * data['close'][sym][timestamp]
-            port[sym] -= int(order["Shares"])
-            cash_dict[sym] = int(order["Shares"]) * data['close'][sym][timestamp]
-    return cash_dict
+def execute(data, timestamp, order, cash_dict, port):
+    sym = order["Sym"]
+    if order["Type"] == "Buy":
+        cash_dict['CASH'] -= int(order["Shares"]) * data['close'][sym][timestamp]
+        port[sym] += int(order["Shares"])
+        #cash_dict[sym] = int(order["Shares"]) * data['close'][sym][timestamp]
+    if order["Type"] == "Sell":
+        cash_dict['CASH'] += int(order["Shares"]) * data['close'][sym][timestamp]
+        port[sym] -= int(order["Shares"])
+        #cash_dict[sym] = int(order["Shares"]) * data['close'][sym][timestamp]
+    return port, cash_dict
 
 def read_csv(filename):
     return csv.DictReader(open(filename, 'rb'), delimiter=',', quotechar='"')
