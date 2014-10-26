@@ -40,22 +40,6 @@ equity_values prices day_port = Map.elems $ Map.mapWithKey (calc prices (snd day
 calc :: Map.Map String [String] -> Int -> String -> Int -> Double
 calc prices idx sym num_shares = (read ((fromMaybe ["0.0"] (Map.lookup sym prices)) !! idx) :: Double) * (read (show num_shares) :: Double)
 
---equity_values :: [(Map.Map String Int, Int)] -> Map.Map String [String] -> Map.Map String Double
---equity_values port prices = map (Map.mapWithKey (get_eq_value ) (map snd port)) port
-
---get_eq_value :: String -> Int -> Map.Map String Int -> Map.Map String [String] -> Double
---get_eq_value key shares prices = (fromMaybe 0.0 (Map.lookup key prices)) !! (snd day_port) * shares
-
---eq_val :: Int -> [(Map.Map String Int, Int)] -> Map.Map String [String] -> [Double]
---eq_val (-1) port prices = []
---eq_val n port prices = equity_value n (fst $ head port) prices ++ equity_value (n - 1) (fst $ head (tail port)) prices
---
---equity_value :: Int -> Map.Map String Int -> Map.Map String [String] -> [Double]
---equity_value index day_port prices = Map.elems $ Map.mapWithKey calc day_port
---
---calc :: String -> Int -> Double
---calc sym shares = 0.0
-
 daily_port :: [Order] -> Map.Map String Int -> [Day] -> [Map.Map String Int]
 daily_port orders port dates = check_date orders port dates
 
@@ -76,21 +60,11 @@ port_acc orders cash prices dates = if (get_date $ head orders) == (head dates)
                                     then [(update_cash (head orders) cash prices)] ++ port_acc (tail orders) (update_cash (head orders) cash prices) (Map.map tail prices) (tail dates)
                                     else [cash] ++ port_acc orders cash (Map.map tail prices) (tail dates)
 
- -- + (read (shares (head orders)) :: Double) * (read (head (fromMaybe ["0"] (Map.lookup (sym (head orders)) prices))) :: Double)
 
 update_cash :: Order -> Double -> Map.Map String [String] -> Double
 update_cash order cash prices
     | position order == "Buy" = cash - (read (shares order) :: Double) * (read (head (fromMaybe ["0"] (Map.lookup (sym order) prices))) :: Double)
     | otherwise               = cash + (read (shares order) :: Double) * (read (head (fromMaybe ["0"] (Map.lookup (sym order) prices))) :: Double)
-
---total_value :: Map.Map String [String] -> [Map.Map String Int] -> [Double] -> [Double]
---total_value prices port cash = map equity_value port
---
---equity_value :: Map.Map String Int -> Map.Map String [String] -> Double
---equity_value day_port prices = map (accum_day prices) day_port
---
---accum_day :: Map.Map String [String] -> Map.Map String Int
---accum_day prices port = Map.map (
 
 uncur g [a, b, c, d, e, f] = g a b c d e f
 
