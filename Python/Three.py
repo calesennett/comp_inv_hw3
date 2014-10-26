@@ -14,8 +14,8 @@ def main():
     if (len(sys.argv) == 3):
         order_book = list(read_csv(sys.argv[2]))
 
-        s_date = dt.datetime(2011, 1, 10)
-        e_date = dt.datetime(2011, 12, 21)
+        s_date = dt.datetime(2008, 1, 1)
+        e_date = dt.datetime(2010, 1, 1)
 
         symbols, data = setup(s_date, e_date, order_book)
         dates, port = trade(float(sys.argv[1]), order_book, symbols, data)
@@ -97,6 +97,7 @@ def trade(cash, order_book, symbols, data):
             if (sym != "CASH"):
                 cash_dict[sym] = int(port[sym]) * data['close'][sym][timestamp]
         cash = sum(cash_dict.values())
+        print cash
         port_values.append(cash)
     return timestamps, port_values
 
