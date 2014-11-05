@@ -14,11 +14,13 @@ def main():
     if (len(sys.argv) == 3):
         order_book = list(read_csv(sys.argv[2]))
 
-        s_date = dt.datetime(2008, 1, 1)
-        e_date = dt.datetime(2010, 1, 1)
+        s_date = dt.datetime(2008, 2, 25)
+        e_date = dt.datetime(2009, 12, 31)
 
         symbols, data = setup(s_date, e_date, order_book)
         dates, port = trade(float(sys.argv[1]), order_book, symbols, data)
+        port = [x for x in port if not np.isnan(x)]
+        print port
         returns = tsu.returnize0(port)
 
         spx_data = [{'Sym': '$SPX'}]
@@ -41,22 +43,9 @@ def main():
         print "\nAverage Daily Return: " + str(float(sum(avg_daily)))
         print "SPX Average Daily Return: " + str(float(sum(spx_avg_daily)))
 
-        create_plot(dates, returns, spx_returns)
 
     else:
         print("Please specify orders file and output file.")
-
-def create_plot(dates, port_returns, spx_returns):
-    plt.clf()
-    port_returns = list(chain.from_iterable(port_returns))
-    spx_returns = list(chain.from_iterable(spx_returns))
-    values = zip(port_returns, spx_returns)
-    plt.plot(dates, values)
-    plt.ylabel("Portfolio Value")
-    plt.xlabel("Dates")
-    plt.legend(["Portfolio", "SPX"])
-    plt.savefig("figure.pdf", format="pdf")
-
 
 def read_data(order_book, timestamps):
     data_obj = da.DataAccess('Yahoo')
@@ -97,7 +86,6 @@ def trade(cash, order_book, symbols, data):
             if (sym != "CASH"):
                 cash_dict[sym] = int(port[sym]) * data['close'][sym][timestamp]
         cash = sum(cash_dict.values())
-        print cash
         port_values.append(cash)
     return timestamps, port_values
 
